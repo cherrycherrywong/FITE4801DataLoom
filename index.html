@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alternative Credit Scoring — Static Demo</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f5f7fa; color:#333; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0 }
+        .container{background:#fff;padding:32px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.08);width:640px;max-width:95%}
+        h1{margin:0 0 8px;font-size:28px;color:#0066cc}
+        input{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px}
+        button{background:#0066cc;color:#fff;border:none;padding:12px 18px;border-radius:8px;cursor:pointer}
+        .result{margin-top:16px;padding:12px;border-radius:8px;border:1px solid #eee;background:#fafafa}
+        .nav-button{margin-top:12px;background:#0055aa;color:#fff;padding:10px 14px;border-radius:8px;border:none}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Alternative Credit Scoring — Static Demo</h1>
+        <p>Search a name (client-side demo using repository data). For real-time Base44, deploy a backend or add API key (not recommended publicly).</p>
+
+        <input id="nameInput" placeholder="Enter name or email (e.g., Tom Chan)">
+        <button id="searchBtn">Search Credit Score</button>
+
+        <div id="loading" style="display:none;margin-top:12px;color:#0066cc">Analyzing data...</div>
+        <div id="result" class="result" style="display:none"></div>
+    </div>
+
+    <script>
+    // Load local dataset (bundled in docs/raw_travel_data.json)
+    let DATA = [];
+
+    async function loadData(){
+        try{
+            const resp = await fetch('raw_travel_data.json');
+            DATA = await resp.json();
+        }catch(e){
+            console.error('Failed to load static data', e);
+            DATA = [];
+        }
+    }
+
+    function findUserRecords(name){
+        if(!name) return [];
+        const q = name.toLowerCase();
+        return DATA.filter(r=>{
+            const fn = (r.full_name||'').toString().toLowerCase();
+            const em = (r.email||'').toString().toLowerCase();
+            return fn.includes(q) || em.includes(q);
+        });
+    }
+
+    function computeHeuristicProbability(tripsCount, totalSpend, completeness){
+        // Simple heuristic: completeness is strong signal
+        const a = Math.min(1, (completeness||0)/100) * 0.6;
+        const b = Math.min(1, (totalSpend||0)/10000) * 0.3;
+        const c = Math.min(1, (tripsCount||0)/20) * 0.1;
+        return Math.max(0, Math.min(1, a+b+c));
+    }
+
+    function toRiskRating(score){
+        if(score>=800) return 'Excellent';
+        if(score>=740) return 'Very Good';
+        if(score>=670) return 'Good';
+        if(score>=580) return 'Fair';
+        return 'Poor';
+    }
+
+    function renderResult(name, metrics){
+        const el = document.getElementById('result');
+        if(!metrics){
+            el.innerHTML = `<h2>No records</h2><p>No matching user found.</p>`;
+            el.style.display = 'block';
+            return;
+        }
+
+        const {trips,total_spend,avg_completeness,probability,score} = metrics;
+
+        el.innerHTML = `
+            <h2>Credit Score for ${name}</h2>
+            <p><strong>Trips:</strong> ${trips}</p>
+            <p><strong>Total Spend:</strong> $${total_spend.toFixed(2)}</p>
+            <p><strong>Average Completeness:</strong> ${avg_completeness.toFixed(2)}%</p>
+            <p><strong>Calculated Score:</strong> ${score}</p>
+            <p><strong>Risk Rating:</strong> ${toRiskRating(score)}</p>
+            <p><strong>Probability of Good Payment:</strong> ${(probability*100).toFixed(2)}%</p>
+            <button class="nav-button" id="insightsBtn">View Data Insights</button>
+        `;
+        el.style.display = 'block';
+
+        document.getElementById('insightsBtn').onclick = ()=>{
+            window.location.href = `insights.html?name=${encodeURIComponent(name)}`;
+        };
+    }
+
+    function aggregateRecords(records){
+        if(!records || records.length===0) return null;
+        const trips = records.length;
+        // Sum avg_spend_per_trip when available
+        let totalSpend = 0;
+        let completenessSum = 0;
+        let completenessCount = 0;
+        records.forEach(r=>{
+            const sp = parseFloat(r.avg_spend_per_trip || r.tokens_earned || 0) || 0;
+            totalSpend += sp;
+            const cs = parseFloat(r.completeness_score);
+            if(!isNaN(cs) && cs>0){ completenessSum += cs; completenessCount += 1 }
+        });
+        const avgCompleteness = completenessCount>0 ? (completenessSum/completenessCount) : 0;
+        const probability = computeHeuristicProbability(trips, totalSpend, avgCompleteness);
+        const score = Math.round(300 + (probability * 550));
+        return {trips, total_spend: totalSpend, avg_completeness: avgCompleteness, probability, score};
+    }
+
+    document.getElementById('searchBtn').addEventListener('click', async ()=>{
+        const name = document.getElementById('nameInput').value.trim();
+        if(!name) { alert('Please enter a name'); return }
+        document.getElementById('loading').style.display='block';
+        document.getElementById('result').style.display='none';
+        if(DATA.length===0) await loadData();
+        const records = findUserRecords(name);
+        const metrics = aggregateRecords(records);
+        document.getElementById('loading').style.display='none';
+        renderResult(name, metrics);
+    });
+
+    // load on start for snappy UX
+    loadData();
+    </script>
+</body>
+</html>
