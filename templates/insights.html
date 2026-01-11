@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Insights</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            color: #333333;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        p {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            opacity: 0.8;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            display: none;
+        }
+        .result h2 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .result p {
+            margin: 10px 0;
+        }
+        .result hr {
+            border: 0;
+            height: 1px;
+            background: #ddd;
+        }
+        .result h3 {
+            color: #333;
+        }
+        .excellent {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .verygood {
+            color: #20c997;
+            font-weight: bold;
+        }
+        .good {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .fair {
+            color: #fd7e14;
+            font-weight: bold;
+        }
+        .poor {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .loading {
+            display: none;
+            color: #007bff;
+            font-size: 1.2em;
+        }
+        .nav-button {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .nav-button:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Data Insights</h1>
+        <p>Viewing insights for the searched user.</p>
+        <div class="loading" id="loading">Analyzing data...</div>
+        <div class="result" id="result"></div>
+        <button class="nav-button" onclick="window.location.href='/search'">Home</button>
+    </div>
+
+    <script>
+        // Get name from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const name = urlParams.get('name');
+
+        if (name) {
+            fetchData(name);
+        } else {
+            document.getElementById('result').innerHTML = '<h2>Error</h2><p>No name provided.</p>';
+            document.getElementById('result').style.display = 'block';
+        }
+
+        async function fetchData(name) {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+
+            try {
+                const response = await fetch(`/get-credit-score-by-name?name=${encodeURIComponent(name)}`);
+                const data = await response.json();
+
+                document.getElementById('loading').style.display = 'none';
+
+                if (response.ok) {
+                    displayInsights(data, name);
+                } else {
+                    document.getElementById('result').innerHTML = `<h2>Error</h2><p>${data.detail || 'An error occurred'}</p>`;
+                    document.getElementById('result').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result').innerHTML = `<h2>Error</h2><p>Failed to fetch data: ${error.message}</p>`;
+                document.getElementById('result').style.display = 'block';
+            }
+        }
+
+        function displayInsights(data, name) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <h2>Data Insights for ${name}</h2>
+                <h3>Financial "Ability" and Spending Power</h3>
+                <p><strong>Average Spend per Trip:</strong> $${data.average_spend_per_trip.toFixed(2)}</p>
+                <p><strong>Premium cabin vs. Budget choices:</strong> ${data.premium_vs_budget}</p>
+                <p><strong>Ancillary Spending:</strong> ${data.ancillary_spending}</p>
+                <p><strong>Currency & Cross-Border Habits:</strong> ${data.currency_habits}</p>
+                <h3>Lifestyle "Stability" Indicators</h3>
+                <p><strong>Trip Frequency:</strong> ${data.trip_frequency}</p>
+                <p><strong>Travel Purpose Ratio:</strong> ${data.travel_purpose_ratio}</p>
+                <p><strong>Destination Consistency:</strong> ${data.destination_consistency}</p>
+                <p><strong>Geographic Locale Consistency:</strong> ${data.geographic_consistency}</p>
+                <h3>"Willingness" and Personal Responsibility</h3>
+                <p><strong>Booking Lead Times:</strong> ${data.booking_lead_times}</p>
+                <p><strong>Insurance Purchase Rate:</strong> ${data.insurance_purchase_rate}</p>
+                <p><strong>Payment Timing:</strong> ${data.payment_timing}</p>
+                <p><strong>Loyalty Program Tiers:</strong> ${data.loyalty_tiers}</p>
+                <h3>Behavioral & Psychographic Segmentation</h3>
+                <p><strong>Activity Preferences:</strong> ${data.activity_preferences}</p>
+                <p><strong>Obstacles and Challenges:</strong> ${data.obstacles_challenges}</p>
+                <p><strong>Digital Touchpoints:</strong> ${data.digital_touchpoints}</p>
+                <p><strong>Recommendation:</strong> ${data.recommendation}</p>
+            `;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

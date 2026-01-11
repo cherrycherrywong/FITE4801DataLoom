@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Insights — Static Demo</title>
+    <style>
+        body{font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;background:#f5f7fa;color:#333;margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh}
+        .container{background:#fff;padding:28px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.08);width:760px;max-width:95%}
+        h1{color:#0066cc}
+        .row{display:flex;gap:16px}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Data Insights</h1>
+        <div id="loading" style="color:#0066cc">Analyzing data...</div>
+        <div id="result" style="display:none"></div>
+        <button onclick="window.location.href='index.html'" style="margin-top:12px">Home</button>
+    </div>
+
+    <script>
+    // Helper to get URL param
+    function param(name){ const u = new URLSearchParams(location.search); return u.get(name); }
+    async function loadData(){ try{ const r=await fetch('raw_travel_data.json'); return await r.json(); }catch(e){return []} }
+
+    function summarize(records){
+        if(!records || records.length===0) return null;
+        const avgSpend = records.reduce((s,r)=>s + (parseFloat(r.avg_spend_per_trip||0)||0),0)/records.length;
+        return {
+            average_spend_per_trip: avgSpend || 0,
+            premium_vs_budget: avgSpend>1000? 'Premium':'Budget',
+            ancillary_spending: (records.reduce((s,r)=>s+(parseFloat(r.ancillary_spending||0)||0),0)/records.length) || 0,
+            currency_habits: records.some(r=> (r.category||'').toLowerCase()==='business')? 'International':'Domestic',
+            trip_frequency: records.length,
+            travel_purpose_ratio: records.filter(r=> (r.category||'').toLowerCase()==='business').length + '/' + records.length,
+            destination_consistency: records.length>5? 'Consistent':'Variable',
+            geographic_consistency: 'Stable',
+            booking_lead_times: 'Advance',
+            insurance_purchase_rate: records.reduce((s,r)=>s+(parseFloat(r.insurance_purchase_rate||0)||0),0)/records.length || 0,
+            payment_timing: 'Prompt',
+            loyalty_tiers: 'Standard',
+            activity_preferences: records.map(r=>r.activity_preferences || []).flat().slice(0,5).join(', '),
+            digital_touchpoints: records.map(r=>r.digital_touchpoint||'').filter(Boolean).join(', '),
+            recommendation: 'Use model-backed decision for production'
+        };
+    }
+
+    (async ()=>{
+        const name = param('name');
+        if(!name){ document.getElementById('loading').style.display='none'; document.getElementById('result').innerText='No name provided.'; document.getElementById('result').style.display='block'; return; }
+        const data = await loadData();
+        const q = name.toLowerCase();
+        const records = data.filter(r=> ((r.full_name||'').toLowerCase().includes(q)) || ((r.email||'').toLowerCase().includes(q)) );
+        document.getElementById('loading').style.display='none';
+        if(records.length===0){ document.getElementById('result').innerHTML='<h2>No records</h2><p>No matching user found.</p>'; document.getElementById('result').style.display='block'; return; }
+        const summary = summarize(records);
+        document.getElementById('result').innerHTML = `
+            <h2>Data Insights for ${name}</h2>
+            <p><strong>Average Spend per Trip:</strong> $${summary.average_spend_per_trip.toFixed(2)}</p>
+            <p><strong>Premium vs Budget:</strong> ${summary.premium_vs_budget}</p>
+            <p><strong>Ancillary Spending (avg):</strong> $${summary.ancillary_spending.toFixed(2)}</p>
+            <p><strong>Trip Frequency:</strong> ${summary.trip_frequency}</p>
+            <p><strong>Travel Purpose Ratio:</strong> ${summary.travel_purpose_ratio}</p>
+            <p><strong>Activity Preferences:</strong> ${summary.activity_preferences}</p>
+            <p><strong>Digital Touchpoints:</strong> ${summary.digital_touchpoints}</p>
+            <p><strong>Recommendation:</strong> ${summary.recommendation}</p>
+        `;
+        document.getElementById('result').style.display='block';
+    })();
+    </script>
+</body>
+</html>

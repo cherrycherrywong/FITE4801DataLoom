@@ -1,0 +1,48 @@
+"""
+==============================================================================
+👨‍🏫 INSTRUCTIONS FOR RUNNING THIS PROJECT (FOR PROFESSOR / EVALUATOR)
+==============================================================================
+
+PREREQUISITES:
+1. Ensure Python 3.9+ is installed.
+2. Ensure the folder structure is correct:
+   /ProjectFolder
+      ├── main.py             (This file)
+      ├── train_model.py      (Required to generate the AI brain)
+      ├── requirements.txt    (List of libraries)
+      └── templates/          (Folder containing HTML files)
+          ├── search.html
+          └── insights.html
+
+------------------------------------------------------------------------------
+STEP 1: INSTALL DEPENDENCIES
+Open a terminal/command prompt in this folder and run:
+   pip install -r requirements.txt
+
+(If that fails, try: pip install fastapi uvicorn pandas scikit-learn joblib jinja2 requests python-multipart)
+
+------------------------------------------------------------------------------
+STEP 2: TRAIN THE MODEL (Required First Run)
+The AI model file (credit_brain.pkl) is generated locally to avoid version issues.
+Run this command in the terminal:
+   python train_model.py
+
+*Wait for the success message: "✅ Success! Model saved as 'credit_brain.pkl'"*
+
+------------------------------------------------------------------------------
+STEP 3: START THE SERVER
+Run this command to start the web application:
+   uvicorn main:app --reload
+
+*Wait for the message: "Uvicorn running on http://127.0.0.1:8000"*
+
+------------------------------------------------------------------------------
+STEP 4: ACCESS THE APPLICATION
+Open your web browser (Chrome/Edge/Safari) and go to:
+   http://127.0.0.1:8000/search
+
+* Test Search Names: "Tom Chan", "James Wilson", "Bruce Wayne"
+* Note: This app runs in "Hybrid Mode". It attempts to fetch live data from Base44.
+  If the API connection fails, it automatically falls back to internal CSV data.
+==============================================================================
+"""

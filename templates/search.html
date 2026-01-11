@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alternative Credit Scoring</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            color: #333333;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        p {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            opacity: 0.8;
+        }
+        .search-form {
+            margin-bottom: 30px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #333333;
+            font-size: 1em;
+            outline: none;
+            margin-bottom: 20px;
+        }
+        input[type="text"]::placeholder {
+            color: #999;
+        }
+        button {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: #ffffff;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            display: none;
+        }
+        .result h2 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .result p {
+            margin: 10px 0;
+        }
+        .result hr {
+            border: 0;
+            height: 1px;
+            background: #ddd;
+        }
+        .result h3 {
+            color: #333;
+        }
+        .excellent {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .verygood {
+            color: #20c997;
+            font-weight: bold;
+        }
+        .good {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .fair {
+            color: #fd7e14;
+            font-weight: bold;
+        }
+        .poor {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .loading {
+            display: none;
+            color: #007bff;
+            font-size: 1.2em;
+        }
+        .nav-button {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .nav-button:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Alternative Credit Scoring</h1>
+        <p>Enter a name to search for their credit score based on travel data.</p>
+        <div class="search-form">
+            <input type="text" id="nameInput" placeholder="Enter name (e.g., Tom Chan)">
+            <br>
+            <button onclick="searchCreditScore()">Search Credit Score</button>
+        </div>
+        <div class="loading" id="loading">Analyzing data...</div>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        async function searchCreditScore() {
+            const name = document.getElementById('nameInput').value.trim();
+            if (!name) {
+                alert('Please enter a name');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+
+            try {
+                const response = await fetch(`/get-credit-score-by-name?name=${encodeURIComponent(name)}`);
+                const data = await response.json();
+
+                document.getElementById('loading').style.display = 'none';
+
+                if (response.ok) {
+                    displayResult(data, name);
+                } else {
+                    document.getElementById('result').innerHTML = `<h2>Error</h2><p>${data.error || 'An error occurred'}</p>`;
+                    document.getElementById('result').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result').innerHTML = `<h2>Error</h2><p>Failed to fetch data: ${error.message}</p>`;
+                document.getElementById('result').style.display = 'block';
+            }
+        }
+
+        function displayResult(data, name) {
+            const resultDiv = document.getElementById('result');
+            const rating = data.risk_rating.toLowerCase();
+            resultDiv.innerHTML = `
+                <h2>Credit Score for ${name}</h2>
+                <p><strong>Trips:</strong> ${data.trips}</p>
+                <p><strong>Total Spend:</strong> $${data.total_spend.toFixed(2)}</p>
+                <p><strong>Average Completeness:</strong> ${data.avg_completeness.toFixed(2)}%</p>
+                <p><strong>Calculated Score:</strong> ${data.calculated_score}</p>
+                <p><strong>Risk Rating:</strong> <span class="${data.risk_rating.toLowerCase().replace(' ', '')}">${data.risk_rating}</span></p>
+                <p><strong>Probability of Good Payment:</strong> ${(data.probability * 100).toFixed(2)}%</p>
+                <hr>
+                <h3>Formula</h3>
+                <p>The credit score is derived from the machine learning model's probability of the user being a good payer.</p>
+                <p><strong>Score = 300 + (Probability × 550)</strong></p>
+                <p>This scales the probability (0-1) to the standard credit score range (300-850).</p>
+                <p>Tiers: Excellent (≥800), Very Good (740-799), Good (670-739), Fair (580-669), Poor (&lt;580)</p>
+                <button class="nav-button" onclick="window.location.href='/insights?name=${encodeURIComponent(name)}'">View Data Insights</button>
+            `;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

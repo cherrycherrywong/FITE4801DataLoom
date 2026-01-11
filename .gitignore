@@ -1,0 +1,10 @@
+__pycache__/
+.venv/
+venv/
+env/
+*.pyc
+.DS_Store
+.env
+raw_travel_data.json
+credit_brain.pkl
+.idea/
