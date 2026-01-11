@@ -22,7 +22,7 @@
     <script>
     // Helper to get URL param
     function param(name){ const u = new URLSearchParams(location.search); return u.get(name); }
-    async function loadData(){ try{ const r=await fetch('raw_travel_data.json'); return await r.json(); }catch(e){return []} }
+    async function loadData(){ try{ const r=await fetch('docs/raw_travel_data.json'); return await r.json(); }catch(e){return []} }
 
     function summarize(records){
         if(!records || records.length===0) return null;

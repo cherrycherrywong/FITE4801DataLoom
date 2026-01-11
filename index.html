@@ -32,7 +32,7 @@
 
     async function loadData(){
         try{
-            const resp = await fetch('raw_travel_data.json');
+            const resp = await fetch('docs/raw_travel_data.json');
             DATA = await resp.json();
         }catch(e){
             console.error('Failed to load static data', e);
