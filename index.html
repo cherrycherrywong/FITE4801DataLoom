@@ -80,10 +80,16 @@
             <h2>Credit Score for ${name}</h2>
             <p><strong>Trips:</strong> ${trips}</p>
             <p><strong>Total Spend:</strong> $${total_spend.toFixed(2)}</p>
-            <p><strong>Average Completeness:</strong> ${avg_completeness.toFixed(2)}%</p>
+            <p><strong>completeness percentage of data profile:</strong> ${avg_completeness.toFixed(2)}%</p>
             <p><strong>Calculated Score:</strong> ${score}</p>
             <p><strong>Risk Rating:</strong> ${toRiskRating(score)}</p>
             <p><strong>Probability of Good Payment:</strong> ${(probability*100).toFixed(2)}%</p>
+            <hr>
+            <h3>Formula</h3>
+            <p>The credit score is derived from the model's probability of the user being a good payer.</p>
+            <p><strong>Score = 300 + (Probability × 550)</strong></p>
+            <p>This scales the probability (0-1) to the standard credit score range (300-850).</p>
+            <p>Tiers: Excellent (≥800), Very Good (740-799), Good (670-739), Fair (580-669), Poor (&lt;580)</p>
             <button class="nav-button" id="insightsBtn">View Data Insights</button>
         `;
         el.style.display = 'block';
